@@ -20,8 +20,10 @@ import android.util.Log
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material3.SnackbarDuration.Indefinite
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.Posture
+import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
@@ -31,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.window.core.layout.WindowSizeClass
 import androidx.work.Configuration
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -198,6 +201,7 @@ class SnackbarScreenshotTests {
         }
     }
 
+    @OptIn(ExperimentalMaterial3AdaptiveApi::class)
     private fun testSnackbarScreenshotWithSize(
         snackbarHostState: SnackbarHostState,
         width: Dp,
@@ -213,16 +217,26 @@ class SnackbarScreenshotTests {
                 DeviceConfigurationOverride.ForcedSize(DpSize(width, height)),
             ) {
                 BoxWithConstraints {
-                    val appState = rememberNiaAppState(
-                        windowSizeClass = WindowSizeClass.calculateFromSize(
-                            DpSize(maxWidth, maxHeight),
-                        ),
-                        networkMonitor = networkMonitor,
-                        userNewsResourceRepository = userNewsResourceRepository,
-                        timeZoneMonitor = timeZoneMonitor,
-                    )
                     NiaTheme {
-                        NiaApp(appState, snackbarHostState, false, {}, {})
+                        val fakeAppState = rememberNiaAppState(
+                            networkMonitor = networkMonitor,
+                            userNewsResourceRepository = userNewsResourceRepository,
+                            timeZoneMonitor = timeZoneMonitor,
+                        )
+                        NiaApp(
+                            appState = fakeAppState,
+                            snackbarHostState = snackbarHostState,
+                            showSettingsDialog = false,
+                            onSettingsDismissed = {},
+                            onTopAppBarActionClick = {},
+                            windowAdaptiveInfo = WindowAdaptiveInfo(
+                                windowSizeClass = WindowSizeClass.compute(
+                                    maxWidth.value,
+                                    maxHeight.value,
+                                ),
+                                windowPosture = Posture(),
+                            ),
+                        )
                     }
                 }
             }
